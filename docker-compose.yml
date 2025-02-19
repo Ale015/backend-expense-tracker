@@ -1,0 +1,40 @@
+services:
+  db:
+    # Imagem do Postgre
+    image: postgres:latest
+    # Nome do container criado
+    container_name: db_expense_tracker
+    # Usuário e Senha permitidos
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # Banco de Dados criado
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    # Salvar no diretório local ./pgdata e dentro do container
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: api_expense_tracker
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: npm run dev
+
+volumes:
+  pgdata:
+  
