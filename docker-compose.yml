@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      # Banco de Dados criado
+      # Banco de Dados criado (Usado no Dbeaver)
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "${DB_PORT}:${DB_PORT}"
@@ -34,6 +34,7 @@ services:
       - .:/app
     working_dir: /app
     command: npm run dev
+
 
 volumes:
   pgdata:
