@@ -15,3 +15,8 @@ export const AppDataSource = new DataSource({
     logging: true,
     entities: ['src/Models/*.ts'],
 });
+
+
+// entities: process.env.NODE_ENV === "production" 
+//         ? ["dist/Models/*.js"] // Caminho para quando o código estiver compilado
+//         : ["src/Models/*.ts"],
