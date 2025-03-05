@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "migrate":"psql -U jr -d expense_tracker_db -f ./src/migrations/migrations.sql"
   },
   "repository": {
     "type": "git",
