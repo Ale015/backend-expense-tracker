@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { createTransaction, deleteTransaction, getTransactionById, getTransactions, updateTransaction } from "../models/transactionModel.js";
+import { parse } from "path";
+import { start } from "repl";
 
 const router = Router();
 
@@ -11,10 +13,34 @@ router.get("/", async (req, res) => {
 // ROTAS
 router.get("/transactions", async (req, res) => {
     try {
-        const transactions = await getTransactions();
-        res.json(transactions);
+
+        const { startDate, endDate } = req.query;
+        let { orderBy } = req.query;
+
+        const urlDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+        if ((startDate && !urlDateRegex.test(startDate as string)) || (endDate && !urlDateRegex.test(endDate as string))) {
+            res.status(400).json({ message: "Formato de data inválido. Use YYYY-MM-DD." });
+            return;
+        }
+
+        let validOrderBy = 'ASC';
+        orderBy = String(orderBy);
+        if(orderBy.trim().toUpperCase() === 'ASC' || orderBy.trim().toUpperCase() === 'DESC'){
+            validOrderBy = orderBy.trim().toUpperCase();
+        } else {
+            validOrderBy = 'ASC'
+        }
+
+        const transactions = await getTransactions(startDate as string | undefined, endDate as string | undefined, validOrderBy);
+        if(transactions.length === 0){
+            res.json([])
+        }
+
+        res.json(transactions)
+
     } catch (error) {
         res.status(500).json({ error: "Erro ao buscar transações" });
+        return;
     }
 });
 
@@ -34,6 +60,7 @@ router.get("/transactions/:id", async (req,res)=>{
 
         if(!transaction){
             res.status(404).json({message: "Transação não encontrada"})
+            return;
         }
 
         res.json(transaction);
@@ -60,27 +87,19 @@ router.post("/transactions", async (req,res)=>{
             return;
         }
 
-        const dateRegex = /^(0[1-9]|[12][0-9]|3[01])[-\/.](0[1-9]|1[0-2])[-\/.](\d{4})$/;
-        const match = date.match(dateRegex);
-        if(!match){
-            res.status(400).json({message: "Formato de data inválido. Use DD/MM/YYYY ou DD-MM-YYYY."})
+        const dateRegex = /^\d{4}[-.\/|\\](0[1-9]|1[0-2])[-.\/|\\](0[1-9]|[12]\d|3[01])$/;
+        if(!dateRegex.test(date)){
+            res.status(400).json({message: "Formato de data inválido. Use YYYY-MM-DD."})
             return;
         }
 
-        const [, day, month, year ] = match;
-        const formattedDate = `${year}-${month}-${day}`;
-
-        const postTransaction = await createTransaction(title,amount,formattedType,formattedDate);
+        const postTransaction = await createTransaction(title,amount,formattedType,date);
 
 
         res.status(201).json({
             message: "Transação salva corretamente no banco.",
             transaction: postTransaction
         });
-
-        return;
-
-
 
     } catch (error) {
         console.error("Erro ao criar transação: ", error);
@@ -102,29 +121,24 @@ router.put("/transactions/:id", async (req,res) => {
         // Verificação do tipo
         const formattedType = type.trim().toLowerCase();
         if (formattedType !== 'income' && formattedType !== 'expense' ){
-            res.status(400).json({message:"Informe o tipoo corretamente"})
-        }
-
-        // verificação de dados
-        const dateRegex = /^(0[1-9]|[12][0-9]|3[01])[-\/.](0[1-9]|1[0-2])[-\/.](\d{4})$/;
-        const dateMatch = date.match(dateRegex);
-        if(!dateMatch){
-            res.status(400).json({message: "Formato de data inválido. Use DD/MM/YYYY ou DD-MM-YYYY."})
+            res.status(400).json({message:"O tipo deve ser 'income' ou 'expense'."})
             return;
         }
 
-        const [, day, month, year ] = dateMatch;
-        const formattedDate = `${year}-${month}-${day}`;
+        // verificação de data
+        const dateRegex = /^\d{4}[-.\/|\\](0[1-9]|1[0-2])[-.\/|\\](0[1-9]|[12]\d|3[01])$/;
+        if(!dateRegex.test(date)){
+            res.status(400).json({message: "Formato de data inválido. Use YYYY-MM-DD"});
+            return;
+        }
 
-
-        const updatedTransaction = await updateTransaction(numId,title,amount,formattedType,formattedDate);
+        const updatedTransaction = await updateTransaction(numId,title,amount,formattedType,date);
 
         res.status(200).json({
             message: "Transação atualizada com sucesso.",
             transaction: updatedTransaction,
         });
-        return;
-        
+
     } catch (error) {
         console.error("Error ao atualizar a transação.", error)
         res.status(501)
@@ -144,7 +158,7 @@ router.delete("/transactions/:id", async (req,res)=>{
 
         const deletedTask = await deleteTransaction(numId)
 
-        res.status(204);
+        res.status(204).send();
         return;
 
     } catch (error) {
