@@ -11,7 +11,19 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    
+
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: expense_tracker_api_container
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
 
 volumes:
   pgdata:
