@@ -1,3 +1,4 @@
+import { start } from "repl";
 import pool from "../config/database.js";
 
 export const createTransaction = async (title: string, amount: number, type: 'income' | 'expense', date: string) => {
@@ -112,3 +113,134 @@ export const deleteTransaction = async (id:Number) => {
     return { message: "Transação excluída com sucesso." };
 }
 
+export const calculateTotal = async (startDate?: string, endDate?: string) => {
+    try {  
+        // Definir valores padrão se não forem passados
+        const defaultStartDate = '0001-01-01';
+        const defaultEndDate = '9000-12-31';
+
+        startDate = startDate || defaultStartDate;
+        endDate = endDate || defaultEndDate;
+
+        if (new Date(startDate) > new Date(endDate)) {
+            throw new Error("A data inicial não pode ser maior que a data final.");
+        }
+
+        const query = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS total_incomes,
+                COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS total_expenses
+            FROM transactions
+            WHERE date BETWEEN $1 AND $2
+        `;
+
+        const values = [startDate, endDate];
+
+        const result = await pool.query(query, values);
+
+        const totalIncomes = result.rows[0].total_incomes;
+        const totalExpenses = result.rows[0].total_expenses;
+
+        return totalIncomes - totalExpenses;
+        
+    } catch (error) {
+        console.error("Erro ao calcular o total", error);
+        throw new Error(`Erro ao calcular o total: ${error}`);
+    }
+};
+
+
+
+export const calculateTotalIncomes = async (startDate?: string, endDate?: string) => {
+    try { 
+        
+        let query = `SELECT SUM(amount) AS total FROM transactions WHERE type = 'income'`
+        const values: string[] = [];
+        let paramIndex: number = 1;
+
+        if(startDate && endDate){
+            if(new Date (startDate) > new Date (endDate)){
+                throw new Error("A data inicial não pode ser maior que a data final.")
+            }
+            
+            query += ` AND date BETWEEN $${paramIndex} AND $${paramIndex +1}`
+            values.push(startDate, endDate)
+            paramIndex += 2;
+            
+        } else if (startDate){
+            
+            query += ` AND date >= $${paramIndex}`;
+            values.push(startDate);
+            paramIndex++;
+
+        } else if (endDate){
+
+            query += ` AND date <= $${paramIndex}`
+            values.push(endDate);
+            paramIndex++;
+        }
+        
+        const result = await pool.query(query,values);
+
+        if(result.rows.length === 0 || result.rows[0].total === null){
+            return 0;
+        } else {
+            const numResult = Number(result.rows[0].total)
+            return numResult
+        }
+    
+        
+    } catch (error) {
+        console.error("Erro no retorno do valor total de Incomes")
+        throw new Error(`Erro ao calcular Incomes: ${error}`);
+    }
+}
+
+
+
+
+export const calculateTotalExpenses = async (startDate?: string, endDate?: string) => {
+    try { 
+        
+        let query = `SELECT SUM(amount) AS total FROM transactions WHERE type = 'expense'`
+        const values: string[] = [];
+        let paramIndex: number = 1;
+
+        if(startDate && endDate){
+            if(new Date (startDate) > new Date (endDate)){
+                throw new Error("A data inicial não pode ser maior que a data final.")
+            }
+            
+            query += ` AND date BETWEEN $${paramIndex} AND $${paramIndex +1}`
+            values.push(startDate, endDate)
+            paramIndex += 2;
+            
+        } else if (startDate){
+            
+            query += ` AND date >= $${paramIndex}`;
+            values.push(startDate);
+            paramIndex++;
+
+        } else if (endDate){
+
+            query += ` AND date <= $${paramIndex}`
+            values.push(endDate);
+            paramIndex++;
+        }
+        
+        const result = await pool.query(query,values);
+
+        if(result.rows.length === 0 || result.rows[0].total === null){
+            return 0;
+        } else {
+            
+            const numResult = Number(result.rows[0].total)
+            return numResult
+        }
+    
+        
+    } catch (error) {
+        console.error("Erro no retorno do valor total de Expenses")
+        throw new Error(`Erro ao calcular Expenses: ${error}`);
+    }
+}
