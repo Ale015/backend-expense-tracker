@@ -6,7 +6,11 @@ dotenv.config();
 const { Pool } = pkg;
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+    host: process.env.PG_HOST || "db", // Garante que "db" é o default
+    database: process.env.PG_DATABASE,
+    port: parseInt(process.env.PG_PORT || "5432"), 
 });
 
 // Testa a conexão imediatamente ao iniciar

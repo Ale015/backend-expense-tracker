@@ -11,6 +11,10 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d expense_tracker_db"]
+      interval: 5s
+      retries: 5
 
   api:
     build:
@@ -19,11 +23,16 @@ services:
     container_name: expense_tracker_api_container
     restart: always
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      PG_USER: ${PG_USER}
+      PG_PASSWORD: ${PG_PASSWORD}
+      PG_HOST: db
+      PG_DATABASE: ${PG_DATABASE}
+      PG_PORT: ${PG_PORT}
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:
