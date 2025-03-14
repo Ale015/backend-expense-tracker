@@ -7,8 +7,8 @@ const { Pool } = pkg;
 
 const pool = new Pool({
 
-    connectionString: process.env.DATABASE_URL
-
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
     // user: process.env.PG_USER,
     // password: process.env.PG_PASSWORD,
     // host: process.env.PG_HOST || "db", // Garante que "db" é o default
