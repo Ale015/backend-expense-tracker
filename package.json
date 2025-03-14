@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "start-prod": "tsc && npm run migrate && node dist/server.js",
-    "migrate":"node dist/migrations/migrations.js"
+    "migrate": "node dist/migrations/migrations.js"
   },
   "repository": {
     "type": "git",
@@ -23,7 +23,9 @@
   },
   "homepage": "https://github.com/Ale015/backend-expense-tracker#readme",
   "dependencies": {
+    "@types/cors": "^2.8.17",
     "@types/dotenv": "^6.1.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "pg": "^8.13.3",
