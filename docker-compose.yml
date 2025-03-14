@@ -23,11 +23,7 @@ services:
     container_name: expense_tracker_api_container
     restart: always
     environment:
-      PG_USER: ${PG_USER}
-      PG_PASSWORD: ${PG_PASSWORD}
-      PG_HOST: ${PG_HOST}
-      PG_DATABASE: ${PG_DATABASE}
-      PG_PORT: ${PG_PORT}
+      DATABASE_URL: ${DATABASE_URL}
     ports:
       - "3000:3000"
     depends_on:
