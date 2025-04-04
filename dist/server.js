@@ -1,7 +1,9 @@
 import dotenv from "dotenv";
 import app from "./app.js";
 import pool from "./config/database.js";
+import cors from 'cors';
 dotenv.config();
+app.use(cors({ origin: "*" }));
 const PORT = process.env.PORT || 3000;
 pool.query("SELECT NOW()", (err, res) => {
     if (err) {

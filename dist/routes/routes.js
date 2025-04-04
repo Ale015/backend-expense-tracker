@@ -145,11 +145,11 @@ router.get("/dashboard", (req, res) => __awaiter(void 0, void 0, void 0, functio
     let { startDate, endDate } = req.query;
     if (startDate) {
         startDate = String(startDate);
-        startDate = startDate.replace(/[-.\/|\\]/g, "-");
+        startDate = startDate.replace(/[-.\/|\\]/g, "-").trim();
     }
     if (endDate) {
         endDate = String(endDate);
-        endDate = endDate.replace(/[-.\/|\\]/g, "-");
+        endDate = endDate.replace(/[-.\/|\\]/g, "-").trim();
     }
     const urlDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
     if ((startDate && !urlDateRegex.test(startDate)) || (endDate && !urlDateRegex.test(endDate))) {
@@ -159,6 +159,7 @@ router.get("/dashboard", (req, res) => __awaiter(void 0, void 0, void 0, functio
     const total = yield calculateTotal(startDate, endDate);
     const totalIncomes = yield calculateTotalIncomes(startDate, endDate);
     const totalExpenses = yield calculateTotalExpenses(startDate, endDate);
-    res.json({ total, totalIncomes, totalExpenses });
+    const objStatus = { status: 200 };
+    res.status(200).json({ objStatus, total, totalIncomes, totalExpenses });
 }));
 export default router;

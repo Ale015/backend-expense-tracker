@@ -33,9 +33,11 @@ router.get("/transactions", async (req, res) => {
         const transactions = await getTransactions(startDate as string | undefined, endDate as string | undefined, validOrderBy);
         if(transactions.length === 0){
             res.json([])
+            return;
         }
         
         res.json(transactions)
+        return;
         
     } catch (error) {
         res.status(500).json({ error: "Erro ao buscar transações" });
@@ -154,19 +156,27 @@ router.delete("/transactions/:id", async (req,res)=>{
         const { id } = req.params;
 
         const numId = Number(id);
-         
+        
+        
         if(isNaN(numId) || numId <= 0){
             res.status(400).json({message: "ID inválido"})
             return;
         }
 
+        const idExists = await getTransactionById(numId)
+
+        if (!idExists){
+            res.status(400).json({message: "Transação não encontrada."})
+            return 
+        } 
+        
         const deletedTask = await deleteTransaction(numId)
 
-        res.status(204);
+        res.status(204).end();
         return;
 
     } catch (error) {
-        console.error("Error ao atualizar a transação.", error)
+        console.error("Error ao excluir a transação.", error)
         res.status(500).json({ message: "Erro interno do servidor" });
     }
 
@@ -175,29 +185,29 @@ router.delete("/transactions/:id", async (req,res)=>{
 router.get("/dashboard", async (req, res) => {
 
     let { startDate, endDate } = req.query;
-    
+
     if(startDate){
         startDate = String(startDate)
-        startDate = startDate.replace(/[-.\/|\\]/g, "-");
+        startDate = startDate.replace(/[-.\/|\\]/g, "-").trim();
     }
 
     if(endDate){
         endDate = String(endDate)
-        endDate =endDate.replace(/[-.\/|\\]/g, "-");
+        endDate = endDate.replace(/[-.\/|\\]/g, "-").trim();
     }
 
     const urlDateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-    if ((startDate && !urlDateRegex.test(startDate as string)) || (endDate && !urlDateRegex.test(endDate as string))) {
-        res.status(400).json({ message: "Formato de data inválido. Use YYYY-MM-DD." });
+    if ((startDate && !urlDateRegex.test(startDate)) || (endDate && !urlDateRegex.test(endDate))) {
+        res.status(400).json({ message: "Formato de data inválido. Use YYYY-MM-DD."});
         return;
     }
-
-
 
     const total = await calculateTotal(startDate, endDate);
     const totalIncomes = await calculateTotalIncomes(startDate, endDate);
     const totalExpenses = await calculateTotalExpenses(startDate,endDate);
-    res.json({total,totalIncomes,totalExpenses});
+
+    res.status(200).json({ total, totalIncomes, totalExpenses});
+    return;
 });
 
 
